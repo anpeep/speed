@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>El Speedrun Cantina - Live Projector Dashboard</title>
+    <style>
+        :root {
+            --bg-base: #07080c;
+            --bg-panel: #11131c;
+            --bg-panel-hover: #181b2a;
+            --matrix-green: #00ff66;
+            --matrix-glow: rgba(0, 255, 102, 0.25);
+            --fiesta-red: #ff2a5f;
+            --fiesta-yellow: #ffb703;
+            --text-main: #f1f5f9;
+            --text-muted: #64748b;
+            --border-color: #1e2235;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Sidebar Control Panel */
+        aside {
+            width: 340px;
+            background: var(--bg-panel);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            gap: 20px;
+            box-shadow: 5px 0 25px rgba(0, 0, 0, 0.5);
+            z-index: 10;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-icon {
+            font-size: 2rem;
+            background: rgba(0, 255, 102, 0.1);
+            padding: 10px;
+            border-radius: 12px;
+            border: 1px solid var(--matrix-green);
+        }
+
+        .brand h1 {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--matrix-green);
+            text-shadow: 0 0 10px var(--matrix-glow);
+        }
+
+        .brand p {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .control-group {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .control-group h3 {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: var(--fiesta-yellow);
+        }
+
+        .stat-line {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+        }
+
+        .btn {
+            background: var(--matrix-green);
+            color: #000;
+            font-weight: 700;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            box-shadow: 0 0 15px var(--matrix-glow);
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 25px var(--matrix-green);
+        }
+
+        .btn-danger {
+            background: var(--fiesta-red);
+            color: #fff;
+            box-shadow: 0 0 15px rgba(255, 42, 95, 0.3);
+        }
+
+        /* Main Projector Content */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 30px;
+            gap: 24px;
+            overflow: hidden;
+        }
+
+        .top-banner {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+        }
+
+        .banner-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .banner-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--matrix-green);
+        }
+
+        .banner-card.warning::before { background: var(--fiesta-yellow); }
+        .banner-card.timer-card::before { background: var(--fiesta-red); }
+
+        .banner-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .banner-value {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: var(--text-main);
+        }
+
+        .timer-display {
+            font-family: 'Courier New', Courier, monospace;
+            color: var(--fiesta-red);
+        }
+
+        /* Leaderboard Table */
+        .table-wrapper {
+            flex: 1;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background: #151824;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 18px 24px;
+            position: sticky;
+            top: 0;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        td {
+            padding: 18px 24px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        tr { transition: all 0.4s ease; }
+        tr:hover td { background: var(--bg-panel-hover); }
+
+        tr.eliminated {
+            background: rgba(255, 42, 95, 0.05);
+            color: var(--text-muted);
+        }
+        tr.eliminated td {
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+
+        .rank-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-weight: 800;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        .live-wpm {
+            color: var(--matrix-green);
+            font-weight: 800;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .status-pill {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            display: inline-block;
+        }
+
+        .pill-active { background: rgba(0, 255, 102, 0.1); color: var(--matrix-green); border: 1px solid rgba(0, 255, 102, 0.3); }
+        .pill-eliminated { background: rgba(255, 42, 95, 0.1); color: var(--fiesta-red); border: 1px solid rgba(255, 42, 95, 0.3); text-decoration: none !important; }
+
+        #alert-popup {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--fiesta-red);
+            color: #fff;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 1.2rem;
+            box-shadow: 0 10px 30px rgba(255, 42, 95, 0.5);
+            z-index: 100;
+            border: 2px solid #fff;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="alert-popup">🌶️ ELIMINATED!</div>
+
+    <aside>
+        <div class="brand">
+            <div class="brand-icon">🌵</div>
+            <div>
+                <h1>Cyber-Cantina</h1>
+                <p>Lucha Libre Typing</p>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <h3>Server Connection</h3>
+            <div class="stat-line"><span>Status:</span> <strong id="ws-status" style="color: var(--fiesta-red);">Disconnected</strong></div>
+            <div class="stat-line"><span>Host:</span> <code>Port 8080</code></div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: auto;">
+            <button class="btn" onclick="startLevelTimer()">▶️ Start Round Timer</button>
+            <button class="btn btn-danger" onclick="resetTournamentData()">🔄 Reset Tournament</button>
+        </div>
+    </aside>
+
+    <main>
+        <div class="top-banner">
+            <div class="banner-card">
+                <div class="banner-title">Current Stage</div>
+                <div class="banner-value" id="level-display">LEVEL 1</div>
+            </div>
+            <div class="banner-card warning">
+                <div class="banner-title">Minimum WPM</div>
+                <div class="banner-value" id="threshold-display">30 WPM</div>
+            </div>
+            <div class="banner-card timer-card">
+                <div class="banner-title">Round Timer</div>
+                <div class="banner-value timer-display" id="timer-display">01:00</div>
+            </div>
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 80px;">Rank</th>
+                        <th>Player Name</th>
+                        <th>Live WPM</th>
+                        <th>Accuracy</th>
+                        <th>Time Left</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboard-tbody">
+                    <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 40px;">Waiting for players...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script>
+        let socket;
+        let players = {};
+        let currentLevel = 1;
+        let currentThreshold = 30;
+        let roundTimer;
+        let secondsLeft = 60;
+
+        function connectWebSocket() {
+            // Automatically connects back to whatever IP/host served the page on port 8080
+            socket = new WebSocket('ws://' + window.location.hostname + ':8080');
+
+            socket.onopen = () => {
+                document.getElementById('ws-status').innerText = 'Connected';
+                document.getElementById('ws-status').style.color = 'var(--matrix-green)';
+            };
+
+            socket.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                if (message.player) {
+                    players[message.player] = message;
+                } else if (message.data) {
+                    players = message.data;
+                }
+                renderLeaderboard();
+            };
+
+            socket.onclose = () => {
+                document.getElementById('ws-status').innerText = 'Disconnected';
+                document.getElementById('ws-status').style.color = 'var(--fiesta-red)';
+                setTimeout(connectWebSocket, 2000);
+            };
+        }
+
+        function renderLeaderboard() {
+            const tbody = document.getElementById('leaderboard-tbody');
+            tbody.innerHTML = '';
+
+            const list = Object.keys(players).map(name => ({
+                name: name,
+                wpm: players[name].wpm || 0,
+                acc: players[name].acc || 100,
+                timeLeft: players[name].timeLeft || '-',
+                eliminated: players[name].eliminated || false
+            }));
+
+            // Sort: Active first (WPM desc, then Acc desc), eliminated frozen at bottom
+            list.sort((a, b) => {
+                if (a.eliminated && !b.eliminated) return 1;
+                if (!a.eliminated && b.eliminated) return -1;
+                if (b.wpm !== a.wpm) return b.wpm - a.wpm;
+                return b.acc - a.acc;
+            });
+
+            if (list.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 40px;">No typing data received yet...</td></tr>`;
+                return;
+            }
+
+            list.forEach((p, idx) => {
+                const tr = document.createElement('tr');
+                if (p.eliminated) tr.classList.add('eliminated');
+
+                tr.innerHTML = `
+                    <td><div class="rank-badge">${idx + 1}</div></td>
+                    <td><strong>${p.name}</strong></td>
+                    <td class="live-wpm">${p.wpm} WPM</td>
+                    <td>${p.acc}%</td>
+                    <td>${p.timeLeft}</td>
+                    <td>
+                        <span class="status-pill ${p.eliminated ? 'pill-eliminated' : 'pill-active'}">
+                            ${p.eliminated ? 'ELIMINATED 🌶️' : 'ACTIVE ⚡'}
+                        </span>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function startLevelTimer() {
+            clearInterval(roundTimer);
+            secondsLeft = 60;
+
+            roundTimer = setInterval(() => {
+                secondsLeft--;
+                const mins = String(Math.floor(secondsLeft / 60)).padStart(2, '0');
+                const secs = String(secondsLeft % 60).padStart(2, '0');
+                document.getElementById('timer-display').innerText = `${mins}:${secs}`;
+
+                if (secondsLeft <= 0) {
+                    clearInterval(roundTimer);
+                    evaluateRound();
+                }
+            }, 1000);
+        }
+
+        function evaluateRound() {
+            let dropped = [];
+            Object.keys(players).forEach(name => {
+                let p = players[name];
+                if (!p.eliminated && p.wpm < currentThreshold) {
+                    p.eliminated = true;
+                    dropped.push(`${name} (${p.wpm} WPM)`);
+                }
+            });
+
+            if (dropped.length > 0) {
+                const popup = document.getElementById('alert-popup');
+                popup.innerText = `🌶️ ELIMINATED: ${dropped.join(', ')}`;
+                popup.style.display = 'block';
+                setTimeout(() => { popup.style.display = 'none'; }, 6000);
+            }
+
+            currentThreshold = currentThreshold < 80 ? currentThreshold + 5 : currentThreshold + 10;
+            currentLevel++;
+
+            document.getElementById('level-display').innerText = `LEVEL ${currentLevel}`;
+            document.getElementById('threshold-display').innerText = `${currentThreshold} WPM`;
+            renderLeaderboard();
+        }
+
+        function resetTournamentData() {
+            players = {};
+            currentLevel = 1;
+            currentThreshold = 30;
+            document.getElementById('level-display').innerText = `LEVEL 1`;
+            document.getElementById('threshold-display').innerText = `30 WPM`;
+            document.getElementById('timer-display').innerText = `01:00`;
+            renderLeaderboard();
+        }
+
+        connectWebSocket();
+    </script>
+</body>
+</html>
